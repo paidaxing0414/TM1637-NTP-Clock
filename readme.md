@@ -1,8 +1,8 @@
-### TM1637 NTP Clock ###
+# TM1637 NTP Clock #
 
 ---
 
-# 准备材料 #
+### 准备材料 ###
 1. DHT22/DHT21/DHT11
 2. LDR Light Sensor 光敏传感器模组
 3. 3*TM1637
@@ -15,5 +15,5 @@
 
 ---
 
-# 注意事项 #
+### 注意事项 ###
 若使用 **ESP32** 则需要更改 ESP8266WiFi 库为 WiFi
