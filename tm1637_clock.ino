@@ -7,6 +7,9 @@
 const char *ssid = "HUAWEI-104AU3";
 const char *password = "321222lee";
 
+unsigned long startTime = 0;
+unsigned long maxT = 5000;
+
 // TM1637配置
 #define CLK_PIN_TEMP 13  // 连接到TM1637的CLK引脚（温度）
 #define DIO_PIN_TEMP 16  // 连接到TM1637的DIO引脚（温度）
@@ -52,8 +55,7 @@ void setup() {
 
 void loop() {
   Time();
-  Temp();
-  SetBri();
+  //Temp();
 }
 
 void Time() {
@@ -69,26 +71,49 @@ void Time() {
   int hour = timeinfo.tm_hour;
   int minute = timeinfo.tm_min;
   tm1637Time.showNumberDecEx(hour * 100 + minute, 0b11100000, true); // 第二个参数表示是否点亮冒号
+  Temp();
   //delay(1000);
 }
 
 
 void Temp() {
   // 获取温湿度
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
-  // 显示温度和湿度在TM1637上
-  //Serial.println(temperature);
-  int temp = (int)(temperature * 100);
-  int dots1 = 0b00010000; // 0x10
-  tm1637Temp.showNumberDecEx(temp, 0b11100000);
-  //delay(1000);
+  if (startTime == 0) {
+    startTime = millis();
+    float temperature = dht.readTemperature();
+    float humidity = dht.readHumidity();
+    // 显示温度和湿度在TM1637上
+    //Serial.println(temperature);
+    int temp = (int)(temperature * 100);
+    int dots1 = 0b00010000; // 0x10
+    tm1637Temp.showNumberDecEx(temp, 0b11100000);
+    //delay(1000);
 
-  //Serial.println(humidity);
-  int hum = (int)(humidity * 100);
-  int dots2 = 0b00010000; // 0x10
-  tm1637Humid.showNumberDecEx(hum, 0b11100000);
-  delay(300000);
+    //Serial.println(humidity);
+    int hum = (int)(humidity * 100);
+    int dots2 = 0b00010000; // 0x10
+    tm1637Humid.showNumberDecEx(hum, 0b11100000);
+    SetBri();
+  }
+
+  if (millis() - startTime >= maxT) {
+    startTime = millis();
+    float temperature = dht.readTemperature();
+    float humidity = dht.readHumidity();
+    // 显示温度和湿度在TM1637上
+    //Serial.println(temperature);
+    int temp = (int)(temperature * 100);
+    int dots1 = 0b00010000; // 0x10
+    tm1637Temp.showNumberDecEx(temp, 0b11100000);
+    //delay(1000);
+
+    //Serial.println(humidity);
+    int hum = (int)(humidity * 100);
+    int dots2 = 0b00010000; // 0x10
+    tm1637Humid.showNumberDecEx(hum, 0b11100000);
+    SetBri();
+  }
+  return;
 }
 
 void SetBri() {
@@ -101,5 +126,5 @@ void SetBri() {
   tm1637Humid.setBrightness(brightness);
   tm1637Time.setBrightness(brightness);
   //Serial.println(brightness);
-  delay(60000);
+  return;
 }
