@@ -10,6 +10,9 @@ const char *password = "321222lee";
 unsigned long startTime = 0;
 unsigned long maxT = 5000;
 
+unsigned long long lasttime = 0;
+const int delayones = 1000;
+
 // TM1637配置
 #define CLK_PIN_TEMP 13  // 连接到TM1637的CLK引脚（温度）
 #define DIO_PIN_TEMP 16  // 连接到TM1637的DIO引脚（温度）
@@ -51,6 +54,7 @@ void setup() {
 
   pinMode(LDR_PIN, INPUT);
   dht.begin();
+  configTime(8 * 3600, 0, "pool.ntp.org", "time.nist.gov");
 }
 
 void loop() {
@@ -59,18 +63,20 @@ void loop() {
 }
 
 void Time() {
-  // 获取网络时间
-  configTime(8 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) {
-    Serial.println("Failed to obtain time");
-    return;
-  }
+  if (lasttime == 0 || millis() - lasttime >= delayones) {
+    lasttime = millis();
+    struct tm timeinfo;
+    if (!getLocalTime(&timeinfo)) {
+      Serial.println("Failed to obtain time");
+      return;
+    }
 
-  // 显示时间在TM1637上，点亮冒号
-  int hour = timeinfo.tm_hour;
-  int minute = timeinfo.tm_min;
-  tm1637Time.showNumberDecEx(hour * 100 + minute, 0b11100000, true); // 第二个参数表示是否点亮冒号
+    // 显示时间在TM1637上，点亮冒号
+    int hour = timeinfo.tm_hour;
+    int minute = timeinfo.tm_min;
+    tm1637Time.showNumberDecEx(hour * 100 + minute, 0b11100000, true); // 第二个参数表示是否点亮冒号
+  }
+  
   Temp();
   //delay(1000);
 }
@@ -78,25 +84,7 @@ void Time() {
 
 void Temp() {
   // 获取温湿度
-  if (startTime == 0) {
-    startTime = millis();
-    float temperature = dht.readTemperature();
-    float humidity = dht.readHumidity();
-    // 显示温度和湿度在TM1637上
-    //Serial.println(temperature);
-    int temp = (int)(temperature * 100);
-    int dots1 = 0b00010000; // 0x10
-    tm1637Temp.showNumberDecEx(temp, 0b11100000);
-    //delay(1000);
-
-    //Serial.println(humidity);
-    int hum = (int)(humidity * 100);
-    int dots2 = 0b00010000; // 0x10
-    tm1637Humid.showNumberDecEx(hum, 0b11100000);
-    SetBri();
-  }
-
-  if (millis() - startTime >= maxT) {
+  if (startTime == 0 || millis() - startTime >= maxT) {
     startTime = millis();
     float temperature = dht.readTemperature();
     float humidity = dht.readHumidity();
@@ -121,7 +109,7 @@ void SetBri() {
   //Serial.println(ldrValue);
 
   // 根据亮度调整TM1637的亮度
-  int brightness = map(ldrValue, 1023, 0, 1, 4);
+  int brightness = map(ldrValue, 1023, 0, 1, 5);
   tm1637Temp.setBrightness(brightness);
   tm1637Humid.setBrightness(brightness);
   tm1637Time.setBrightness(brightness);
